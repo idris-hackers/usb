@@ -1,0 +1,9 @@
+package usb
+
+sourcedir = src
+modules = System.Bindings.LibUSB
+opts = "-p effects"
+makefile = Makefile
+
+objs = idris_usb.o, idris_usb.h
+
