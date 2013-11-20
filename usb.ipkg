@@ -2,6 +2,9 @@ package usb
 
 sourcedir = src
 modules = System.Bindings.LibUSB
+        , System.Bindings.LibUSB.Data
+        , System.Bindings.LibUSB.Devices
+        , System.Bindings.LibUSB.Descriptors
 opts = "-p effects"
 makefile = Makefile
 
