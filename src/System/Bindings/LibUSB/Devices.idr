@@ -14,18 +14,36 @@ data Speed = Unknown | Low | Full | High | Super
 %include C "idris_usb.h"
 %link C "idris_usb.o"
 
-libusb_get_device_list : Context -> IO DeviceList
+libusb_get_device_list : Context -> IO (Maybe DeviceList)
 libusb_get_device_list (MkContext p) = do
   r <- mkForeign (FFun "idris_libusb_get_device_list" [FPtr] FPtr) p
-  return $ MkDeviceList r
+  is_null <- nullPtr r
+  return $ if is_null then Nothing else Just (MkDeviceList r)
 
--- This should exist 
--- libusb_get_device_list' : Context -> List Device
--- libusb_get_device_list' ctx = 
+libusb_get_device_list_length : DeviceList -> IO Int
+libusb_get_device_list_length (MkDeviceList l) = 
+  mkForeign (FFun "idris_libusb_get_device_list_length" [FPtr] FInt) l
+
+libusb_get_device_from_list : DeviceList -> Int -> IO (Maybe Device)
+libusb_get_device_from_list (MkDeviceList l) i = do
+  r <- mkForeign (FFun "idris_libusb_get_device_from_list" [FPtr, FInt] FPtr) l i
+  is_null <- nullPtr r
+  return $ if is_null then Nothing else Just (MkDevice r)
+
+-- I should really learn that monad stuff properly
+libusb_get_device_list' : Context -> IO (List Device)
+libusb_get_device_list' ctx = do
+  dl <- libusb_get_device_list ctx
+  case dl of
+       Nothing => return []
+       (Just ds) => do
+         len <- libusb_get_device_list_length ds
+         d <- traverse (\i => libusb_get_device_from_list ds i) [0..len-1]
+         return $ catMaybes d 
 
 libusb_free_device_list : DeviceList -> Int -> IO ()
 libusb_free_device_list (MkDeviceList l) u =
-  mkForeign (FFun "libusb_free_device_list" [FPtr, FInt] FUnit) l u
+  mkForeign (FFun "idris_libusb_free_device_list" [FPtr, FInt] FUnit) l u
 
 libusb_get_bus_number : Device -> IO Bits8
 libusb_get_bus_number (MkDevice d) =
@@ -68,9 +86,9 @@ libusb_open_device_with_vid_pid (MkContext ctx) vid pid = do
   is_null <- nullPtr r
   return $ if is_null then Nothing else Just (MkDevice r)
 
-libusb_close : Device -> IO ()
-libusb_close (MkDevice d) =
-  mkForeign (FFun "libusb_close" [FPtr] FUnit) d
+libusb_close : DeviceHandle -> IO ()
+libusb_close (MkDeviceHandle h) =
+  mkForeign (FFun "libusb_close" [FPtr] FUnit) h
 
 libusb_get_device : DeviceHandle -> IO (Maybe Device)
 libusb_get_device (MkDeviceHandle h) = do
