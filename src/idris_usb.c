@@ -12,6 +12,21 @@ char *string_from_buffer(int len, void *buffer)
     return (char *)buffer;
 }
 
+uint8_t idris_libusb_peek(void *buffer, int i)
+{
+    return ((uint8_t *)(buffer))[i];
+}
+
+void idris_libusb_poke(void *buffer, int i, uint8_t b)
+{
+    ((uint8_t *)(buffer))[i] = b;
+}
+
+int idris_bits_to_int(uint8_t b)
+{
+   return (int)b;
+}
+
 /*
  * XXX obviously not thread safe
  */
@@ -77,7 +92,11 @@ libusb_device_handle *idris_libusb_open(libusb_device *dev)
 
     idris_libusb_errno = libusb_open(dev, &handle);
 
-    return handle;
+    if(idris_libusb_errno) {
+        return NULL;
+    } else {
+        return handle;
+    }
 }
 
 int idris_libusb_get_configuration(libusb_device_handle *h)
@@ -87,6 +106,33 @@ int idris_libusb_get_configuration(libusb_device_handle *h)
     idris_libusb_errno = libusb_get_configuration(h, &c);
 
     return c;
+}
+
+int idris_libusb_bulk_transfer(struct libusb_device_handle *dev_handle, unsigned char endpoint, unsigned char *data, int length, unsigned int timeout)
+{
+    int transferred;
+
+    idris_libusb_errno = libusb_bulk_transfer(dev_handle, endpoint, data, length, &transferred, timeout);
+
+    if(idris_libusb_errno) {
+        return idris_libusb_errno;
+    } else {
+        return transferred;
+    }
+}
+
+int idris_libusb_interrupt_transfer(struct libusb_device_handle *dev_handle, unsigned char endpoint, unsigned char *data, int length, unsigned int timeout)
+{
+    int transferred;
+
+    idris_libusb_errno = libusb_interrupt_transfer(dev_handle, endpoint, data, length, &transferred, timeout);
+
+    if(idris_libusb_errno) {
+        return idris_libusb_errno;
+    } else {
+        return transferred;
+    }
+
 }
 
 

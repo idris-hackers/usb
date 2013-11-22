@@ -5,6 +5,8 @@ modules = System.Bindings.LibUSB
         , System.Bindings.LibUSB.Data
         , System.Bindings.LibUSB.Devices
         , System.Bindings.LibUSB.Descriptors
+        , System.Bindings.LibUSB.SyncIO
+
 opts = "-p effects"
 makefile = Makefile
 

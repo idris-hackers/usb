@@ -74,17 +74,19 @@ libusb_unref_device : Device -> IO ()
 libusb_unref_device (MkDevice d) =
   mkForeign (FFun "libusb_unref_device" [FPtr] FUnit) d
 
-libusb_open : Device -> IO (Maybe DeviceHandle)
+libusb_open : Device -> IO (Either Int DeviceHandle)
 libusb_open (MkDevice d) = do
   r <- mkForeign (FFun "idris_libusb_open" [FPtr] FPtr) d
-  is_null <- nullPtr r
-  return $ if is_null then Nothing else Just (MkDeviceHandle r)
+  err <- libusb_get_errno
+  return $ if err == 0
+           then Right (MkDeviceHandle r)
+           else Left err
 
-libusb_open_device_with_vid_pid : Context -> Bits16 -> Bits16 -> IO (Maybe Device)
+libusb_open_device_with_vid_pid : Context -> Bits16 -> Bits16 -> IO (Maybe DeviceHandle)
 libusb_open_device_with_vid_pid (MkContext ctx) vid pid = do
   r <- mkForeign (FFun "libusb_open_device_with_vid_pid" [FPtr, FBits16, FBits16] FPtr) ctx vid pid
   is_null <- nullPtr r
-  return $ if is_null then Nothing else Just (MkDevice r)
+  return $ if is_null then Nothing else Just (MkDeviceHandle r)
 
 libusb_close : DeviceHandle -> IO ()
 libusb_close (MkDeviceHandle h) =
